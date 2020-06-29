@@ -732,12 +732,29 @@ def s3_handler(event, context, metadata):
 
         # Send lines to Datadog
         for line in split_data:
-            # Create structured object and send it
-            structured_line = {
-                "aws": {"s3": {"bucket": bucket, "key": key}},
-                "message": line,
-            }
-            yield structured_line
+            #Parse the line as json
+            event_data = json.loads(line)
+            if event_data['events']:
+                events = event_data['events']
+                num_events = len(events)
+                #For each event in the array, pull it out into event & yield
+                for e in events:
+                    event_data['event']=e
+                    event_data['event_count']=num_events
+                    flattened_line = json.dumps(event_data)
+                    # Create structured object and send it
+                    structured_line = {
+                        "aws": {"s3": {"bucket": bucket, "key": key}},
+                        "message": flattened_line,
+                    }
+                    yield structured_line
+            else:
+                # no events data, just pass the line on as expected
+                structured_line = {
+                    "aws": {"s3": {"bucket": bucket, "key": key}},
+                    "message": line,
+                }
+                yield structured_line
 
 
 # Handle CloudWatch logs from Kinesis
