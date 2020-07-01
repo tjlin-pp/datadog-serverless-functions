@@ -739,6 +739,10 @@ def s3_handler(event, context, metadata):
                 num_events = len(events)
                 #For each event in the array, pull it out into event & yield
                 for e in events:
+                    if e['data'] and e['data']['custom_attributes'] and e['data']['custom_attributes']['Experiment Name']:
+                        # Datadog Does not support spaces in paths
+                        # TODO:  Reuse the sanitize function
+                        e['data']['custom_attributes']['ExperimentName'] = e['data']['custom_attributes']['Experiment Name']
                     event_data['event']=e
                     event_data['event_count']=num_events
                     flattened_line = json.dumps(event_data)
