@@ -743,11 +743,8 @@ def s3_handler(event, context, metadata):
                 # just mark the count to see if this is ever >1
                 event_data['user_identities_count'] = num_identities
                 for i, identity in enumerate(identities):
-                    #assume one, so do not append count to the first one
-                    if i == 0:
-                        event_data['user_identity'] = identity
-                    else:
-                        event_data['user_identity_' + str(i)] = identity
+                    # Identities can come in multiple types.  Flatten by type
+                    event_data['user_identity_' + identity['identity_type']] = identity
             if event_data['events']:
                 events = event_data['events']
                 num_events = len(events)
