@@ -732,12 +732,26 @@ def s3_handler(event, context, metadata):
 
         # Send lines to Datadog
         for line in split_data:
-            #Parse the line as json
+            # Parse the line as json
             event_data = json.loads(line)
+            # Process identities first before events as we want to share
+            # the user_identity across all events
+            if event_data['user_identities']:
+                identities = event_data['user_identities']
+                num_identities = len(identities)
+                # Currently unsure of what to do with multiple identities, so
+                # just mark the count to see if this is ever >1
+                event_data['user_identities_count'] = num_identities
+                for i, identity in enumerate(identities):
+                    #assume one, so do not append count to the first one
+                    if i == 0:
+                        event_data['user_identity'] = identity
+                    else:
+                        event_data['user_identity_' + str(i)] = identity
             if event_data['events']:
                 events = event_data['events']
                 num_events = len(events)
-                #For each event in the array, pull it out into event & yield
+                # For each event in the array, pull it out into event & yield
                 for e in events:
                     if e['data'] and e['data']['custom_attributes'] and e['data']['custom_attributes']['Experiment Name']:
                         # Datadog Does not support spaces in paths
