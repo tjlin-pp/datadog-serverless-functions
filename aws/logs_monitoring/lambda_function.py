@@ -746,16 +746,17 @@ def s3_handler(event, context, metadata):
                     # Identities can come in multiple types.  Flatten by type
                     event_data['user_identity_' + identity['identity_type']] = identity
             if event_data['events']:
-                events = event_data['events']
+                events = event_data.pop['events']
                 num_events = len(events)
                 # For each event in the array, pull it out into event & yield
-                for e in events:
+                for i, e in enumerate(events):
                     if e['data'] and e['data']['custom_attributes'] and e['data']['custom_attributes']['Experiment Name']:
                         # Datadog Does not support spaces in paths
                         # TODO:  Reuse the sanitize function
                         e['data']['custom_attributes']['ExperimentName'] = e['data']['custom_attributes']['Experiment Name']
                     event_data['event']=e
-                    event_data['event_count']=num_events
+                    event_data['batched_event'] = i
+                    event_data['batched_events_total']=num_events
                     flattened_line = json.dumps(event_data)
                     # Create structured object and send it
                     structured_line = {
